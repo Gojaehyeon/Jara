@@ -33,7 +33,14 @@ struct SleepView: View {
                         .font(.title)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
-                        .padding()
+                        .padding(.top, 24)
+                    
+                    // 기상 시간 표시
+                    Text("\(selectedHours)시 \(selectedMinutes)분에 일어나게 돼요.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                     
                     HStack(spacing: 20) {
                         // 시간 선택
