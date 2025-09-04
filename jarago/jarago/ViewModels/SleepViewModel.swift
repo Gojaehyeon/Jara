@@ -62,6 +62,12 @@ import SwiftUI
         print("🌅 기상 기록 완료: \(record.formattedDuration)")
     }
     
+    func cancelSleep() {
+        currentBedtime = nil
+        isSleeping = false
+        print("❌ 수면 취소됨")
+    }
+    
     // MARK: - Notifications
     
     private func requestNotificationPermission() {
