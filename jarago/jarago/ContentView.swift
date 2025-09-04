@@ -8,14 +8,33 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var viewModel = SleepViewModel()
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            NavigationView {
+                SleepView(viewModel: viewModel)
+            }
+            .tabItem {
+                Image(systemName: "bed.double.fill")
+                Text("취침")
+            }
+            
+            NavigationView {
+                RecordsView(viewModel: viewModel)
+            }
+            .tabItem {
+                Image(systemName: "chart.bar.fill")
+                Text("기록")
+            }
+            
+            SettingsView(viewModel: viewModel)
+                .tabItem {
+                    Image(systemName: "gear")
+                    Text("설정")
+                }
         }
-        .padding()
+        .accentColor(.blue)
     }
 }
 
