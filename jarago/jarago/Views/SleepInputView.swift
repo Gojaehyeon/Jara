@@ -7,13 +7,14 @@ struct SleepInputView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var fatigueLevel: Int = 3
     @State private var bedtimeMessage: String = ""
+    @FocusState private var isTextFieldFocused: Bool
     
     var body: some View {
         VStack(spacing: 30) {
             
             VStack(spacing: 24) {
                 // 피곤함 정도
-                VStack(spacing: 16) {
+                VStack(spacing: 0) {
                     Text("지금 얼마나 피곤한가요?")
                         .font(.title2)
                         .fontWeight(.semibold)
@@ -22,23 +23,34 @@ struct SleepInputView: View {
                     CustomFatigueSlider(value: $fatigueLevel)
                 }
                 
-                // 자기 전 한마디
-                VStack(spacing: 16) {
-                    Text("자기 전 한마디를 기록해주세요")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                    
-                    TextField("오늘은 바로 잠에 들 수 있기를 바라요.", text: $bedtimeMessage, axis: .vertical)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .lineLimit(3...6)
-                        .frame(height: 100)
-                }
+                                    // 자기 전 한마디
+                    VStack(spacing: 16) {
+                        Text("자기 전 한마디를 남겨주세요.")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        
+                        ZStack(alignment: .topLeading) {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(.systemGray5))
+                                .frame(height: 120)
+                            
+                            if bedtimeMessage.isEmpty {
+                                Text("오늘은 바로 잠에 들 수 있기를 바라요.")
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, 16)
+                                    .padding(.leading, 16)
+                            }
+                            
+                            TextField("", text: $bedtimeMessage, axis: .vertical)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 16)
+                                .lineLimit(5...8)
+                                .focused($isTextFieldFocused)
+                        }
+                    }
             }
             .padding(.horizontal, 24)
-            .padding(.vertical, 32)
-            
-            Spacer()
             
             // 수면 시작하기 버튼
             Button(action: {
@@ -60,7 +72,10 @@ struct SleepInputView: View {
                 .cornerRadius(16)
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 24)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .onAppear {
+                isTextFieldFocused = true
+            }
         }
     }
 }
@@ -71,18 +86,18 @@ struct CustomFatigueSlider: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            HStack {
-                Text("활기 넘침")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Text("매우 피곤")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 18)
+//            HStack {
+//                Text("활기 넘침")
+//                    .font(.caption)
+//                    .foregroundColor(.secondary)
+//                
+//                Spacer()
+//                
+//                Text("매우 피곤")
+//                    .font(.caption)
+//                    .foregroundColor(.secondary)
+//            }
+//            .padding(.horizontal, 18)
             
             HStack(spacing: 8) {
                 ForEach(1...5, id: \.self) { level in
@@ -103,6 +118,7 @@ struct CustomFatigueSlider: View {
                     }
                 }
             }
+            .padding(.horizontal, 16)
             
             Text("피곤함 정도: \(value)")
                 .font(.subheadline)
@@ -111,8 +127,6 @@ struct CustomFatigueSlider: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(Color(.systemGray6))
-        .cornerRadius(16)
     }
 }
 
