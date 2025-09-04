@@ -56,6 +56,7 @@ struct SleepInputView: View {
             Button(action: {
                 viewModel.currentFatigueLevel = fatigueLevel
                 viewModel.currentBedtimeMessage = bedtimeMessage
+                viewModel.saveCurrentState()
                 showingSleepScreen = true
                 dismiss()
             }) {

@@ -36,7 +36,7 @@ struct SleepView: View {
                         .padding(.top, 24)
                     
                     // 기상 시간 표시
-                    Text("\(selectedHours)시 \(selectedMinutes)분에 일어나게 돼요.")
+                    Text("\(Date().addingTimeInterval(Double(selectedHours) * 3600 + Double(selectedMinutes) * 60).formatted(date: .omitted, time: .shortened))에 일어나게 돼요.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -119,6 +119,16 @@ struct SleepView: View {
             }
             .fullScreenCover(isPresented: $showingSleepScreen) {
                 ActiveSleepView(viewModel: viewModel)
+            }
+            .onAppear {
+                // 수면 중인 상태라면 ActiveSleepView로 이동
+                if viewModel.isSleeping {
+                    showingSleepScreen = true
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DismissActiveSleepView"))) { _ in
+                print("📱 ActiveSleepView 닫기 알림 받음")
+                showingSleepScreen = false
             }
     }
 }

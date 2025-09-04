@@ -4,6 +4,7 @@ import SwiftUI
 struct ActiveSleepView: View {
     @ObservedObject var viewModel: SleepViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showingInsomniaModal = false
     
     var body: some View {
         VStack(spacing: 40) {
@@ -23,15 +24,21 @@ struct ActiveSleepView: View {
                         SleepCountdownView(bedtime: bedtime, sleepGoal: viewModel.currentSleepGoal)
                     }
                 }
-                
-                Text("앱을 다시 열면 자동으로 기상이 기록됩니다")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
             }
             
             Spacer()
+            
+            // 잠에 들지 못했어요 버튼
+            Button(action: {
+                showingInsomniaModal = true
+            }) {
+                Text("잠에 들지 못했어요")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.secondary)
+                    .underline()
+            }
+            .padding(.bottom, -8)
             
             // 수면 중 표시
             HStack {
@@ -54,7 +61,7 @@ struct ActiveSleepView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("취소") {
-                    viewModel.cancelSleep()
+                    viewModel.resetToInitialState()
                     dismiss()
                 }
                 .foregroundColor(.red)
@@ -62,6 +69,11 @@ struct ActiveSleepView: View {
         }
         .onAppear {
             viewModel.startSleep()
+        }
+        .sheet(isPresented: $showingInsomniaModal) {
+            InsomniaMessageView(viewModel: viewModel)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -86,7 +98,7 @@ struct SleepCountdownView: View {
                 .foregroundColor(.secondary)
             
             Text(formatRemainingTime(remainingTime))
-                .font(.title2)
+                .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(.blue)
         }

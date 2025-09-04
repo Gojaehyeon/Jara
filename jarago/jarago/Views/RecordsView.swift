@@ -26,34 +26,37 @@ struct RecordsView: View {
         .navigationBarTitleDisplayMode(.large)
     }
     
-    private var recordsListView: some View {
-        List {
+        private var recordsListView: some View {
+        Group {
             if viewModel.sleepRecords.isEmpty {
                 VStack(spacing: 20) {
+                    Spacer()
+
                     Image(systemName: "bed.double")
                         .font(.system(size: 60))
                         .foregroundColor(.gray)
                     
-                    Text("아직 수면 기록이 없어요")
+                    Text("아직 수면 기록이 없습니다")
                         .font(.title3)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
-                    
-                    Text("취침 탭에서 첫 번째 수면을 기록해보세요!")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
+                    Spacer()
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
-                .listRowBackground(Color.clear)
+                
             } else {
-                ForEach(viewModel.sleepRecords) { record in
-                    RecordRowView(record: record)
+                List {
+                    ForEach(viewModel.sleepRecords.sorted(by: { $0.date > $1.date })) { record in
+                        NavigationLink(destination: SleepRecordDetailView(record: record)) {
+                            RecordRowView(record: record)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
                 }
+                .listStyle(PlainListStyle())
             }
         }
-        .listStyle(PlainListStyle())
     }
     
     private var chartView: some View {
@@ -64,7 +67,7 @@ struct RecordsView: View {
                         .font(.system(size: 60))
                         .foregroundColor(.gray)
                     
-                    Text("차트를 표시할 데이터가 없어요")
+                    Text("차트 데이터가 없습니다")
                         .font(.title3)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
@@ -130,14 +133,14 @@ struct RecordsView: View {
                                 StatCard(
                                     title: "평균 수면",
                                     value: "\(viewModel.averageSleepDuration.formatted(.number.precision(.fractionLength(1))))시간",
-                                    icon: "clock.fill",
+                                    icon: nil,
                                     color: .blue
                                 )
                                 
                                 StatCard(
                                     title: "총 기록",
                                     value: "\(viewModel.sleepRecords.count)일",
-                                    icon: "calendar.fill",
+                                    icon: nil,
                                     color: .green
                                 )
                             }
@@ -158,57 +161,61 @@ struct RecordRowView: View {
     let record: SleepRecord
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(record.date.formatted(.dateTime.month().day()))
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                Text(record.formattedDuration)
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.blue)
-            }
-            
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 16) {
+            // 날짜
+            Text(record.formattedDate)
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            // 취침/기상 시간
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("취침")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                     Text(record.formattedBedtime)
                         .font(.subheadline)
                         .fontWeight(.medium)
                 }
                 
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("기상")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                     Text(record.formattedWakeTime)
                         .font(.subheadline)
                         .fontWeight(.medium)
                 }
             }
+            
+            Spacer()
+            
+            // 총 수면 시간
+            Text(record.formattedDuration)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.blue)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
     }
 }
 
 struct StatCard: View {
     let title: String
     let value: String
-    let icon: String
+    let icon: String?
     let color: Color
     
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundColor(color)
+            }
             
             Text(value)
                 .font(.title3)
@@ -225,3 +232,62 @@ struct StatCard: View {
         .cornerRadius(12)
     }
 } 
+
+#Preview {
+    let viewModel = SleepViewModel()
+    
+    // 더미 데이터 추가
+    let dummyRecords = [
+        SleepRecord(
+            bedtime: Date().addingTimeInterval(-28800), // 8시간 전
+            wakeTime: Date(),
+            fatigueLevel: 4,
+            bedtimeMessage: "오늘은 정말 피곤했어요. 내일은 더 좋은 하루가 되길 바라요.",
+            insomniaMessages: [
+                InsomniaMessage(message: "잠 못 드는 밤..뭘 하고 있나요?", isFromUser: false),
+                InsomniaMessage(message: "그냥 생각이 많아서요"),
+                InsomniaMessage(message: "걱정되는 일이 있나요?")
+            ]
+        ),
+        SleepRecord(
+            bedtime: Date().addingTimeInterval(-86400 - 25200), // 어제 7시간 전
+            wakeTime: Date().addingTimeInterval(-86400),
+            fatigueLevel: 3,
+            bedtimeMessage: "내일은 중요한 미팅이 있어서 긴장돼요.",
+            insomniaMessages: [
+                InsomniaMessage(message: "잠 못 드는 밤..뭘 하고 있나요?", isFromUser: false),
+                InsomniaMessage(message: "미팅 준비 때문에요"),
+                InsomniaMessage(message: "충분히 준비하셨으니 괜찮을 거예요")
+            ]
+        ),
+        SleepRecord(
+            bedtime: Date().addingTimeInterval(-172800 - 27000), // 2일 전 7.5시간 전
+            wakeTime: Date().addingTimeInterval(-172800),
+            fatigueLevel: 2,
+            bedtimeMessage: "오늘은 운동을 많이 해서 좋았어요.",
+            insomniaMessages: []
+        ),
+        SleepRecord(
+            bedtime: Date().addingTimeInterval(-259200 - 30600), // 3일 전 8.5시간 전
+            wakeTime: Date().addingTimeInterval(-259200),
+            fatigueLevel: 5,
+            bedtimeMessage: "너무 피곤해서 바로 잠들 것 같아요.",
+            insomniaMessages: [
+                InsomniaMessage(message: "잠 못 드는 밤..뭘 하고 있나요?", isFromUser: false),
+                InsomniaMessage(message: "아무것도 안 하고 있어요"),
+                InsomniaMessage(message: "그럼 편안히 쉬세요")
+            ]
+        ),
+        SleepRecord(
+            bedtime: Date().addingTimeInterval(-345600 - 23400), // 4일 전 6.5시간 전
+            wakeTime: Date().addingTimeInterval(-345600),
+            fatigueLevel: 1,
+            bedtimeMessage: "오늘은 기분이 좋아요!",
+            insomniaMessages: []
+        )
+    ]
+    
+    viewModel.sleepRecords = dummyRecords
+    
+    return RecordsView(viewModel: viewModel)
+}
