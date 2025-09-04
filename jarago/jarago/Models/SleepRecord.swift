@@ -6,12 +6,16 @@ struct SleepRecord: Identifiable, Codable {
     let bedtime: Date
     let wakeTime: Date
     let duration: TimeInterval
+    let fatigueLevel: Int // 1-5 피곤함 정도
+    let bedtimeMessage: String // 자기 전 한마디
     
-    init(bedtime: Date, wakeTime: Date) {
+    init(bedtime: Date, wakeTime: Date, fatigueLevel: Int = 3, bedtimeMessage: String = "") {
         self.date = Calendar.current.startOfDay(for: bedtime)
         self.bedtime = bedtime
         self.wakeTime = wakeTime
         self.duration = wakeTime.timeIntervalSince(bedtime)
+        self.fatigueLevel = fatigueLevel
+        self.bedtimeMessage = bedtimeMessage
     }
     
     var durationHours: Double {

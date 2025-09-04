@@ -5,10 +5,10 @@ struct SleepView: View {
     @State private var selectedHours: Int = 8
     @State private var selectedMinutes: Int = 0
     @State private var showingSleepScreen = false
+    @State private var showingInputScreen = false
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 30) {
+        VStack(spacing: 30) {
 //                Spacer()
                 
                 // 자라 캐릭터
@@ -90,7 +90,7 @@ struct SleepView: View {
                 Button(action: {
                     let totalHours = Double(selectedHours) + Double(selectedMinutes) / 60.0
                     viewModel.updateSleepGoal(totalHours)
-                    showingSleepScreen = true
+                    showingInputScreen = true
                 }) {
                     HStack {
                         Image(systemName: "bed.double.fill")
@@ -112,10 +112,14 @@ struct SleepView: View {
             .padding(.horizontal, 24)
 //            .navigationTitle("취침")
 //            .navigationBarTitleDisplayMode(.large)
+            .sheet(isPresented: $showingInputScreen) {
+                SleepInputView(viewModel: viewModel, showingSleepScreen: $showingSleepScreen)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+            }
             .fullScreenCover(isPresented: $showingSleepScreen) {
                 ActiveSleepView(viewModel: viewModel)
             }
-        }
     }
 }
 

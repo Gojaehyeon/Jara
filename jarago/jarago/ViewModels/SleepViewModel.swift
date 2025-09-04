@@ -4,9 +4,11 @@ import SwiftUI
 
     @MainActor
     class SleepViewModel: ObservableObject {
-        @Published var sleepRecords: [SleepRecord] = []
-        @Published var currentBedtime: Date?
-        @Published var isSleeping = false
+            @Published var sleepRecords: [SleepRecord] = []
+    @Published var currentBedtime: Date?
+    @Published var isSleeping = false
+    @Published var currentFatigueLevel: Int = 3
+    @Published var currentBedtimeMessage: String = ""
         
         // 앱이 포그라운드로 올 때 자동 기상 체크
         private var appDidBecomeActiveObserver: NSObjectProtocol?
@@ -51,13 +53,20 @@ import SwiftUI
         guard let bedtime = currentBedtime else { return }
         
         let wakeTime = Date()
-        let record = SleepRecord(bedtime: bedtime, wakeTime: wakeTime)
+        let record = SleepRecord(
+            bedtime: bedtime, 
+            wakeTime: wakeTime, 
+            fatigueLevel: currentFatigueLevel, 
+            bedtimeMessage: currentBedtimeMessage
+        )
         
         sleepRecords.append(record)
         saveSleepRecords()
         
         currentBedtime = nil
         isSleeping = false
+        currentFatigueLevel = 3
+        currentBedtimeMessage = ""
         
         print("🌅 기상 기록 완료: \(record.formattedDuration)")
     }
