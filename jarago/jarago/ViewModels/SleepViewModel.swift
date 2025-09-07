@@ -114,6 +114,7 @@ import SwiftUI
         
         sleepRecords.append(record)
         saveSleepRecords()
+        print("💾 기상 기록 저장 완료 - 총 기록 수: \(sleepRecords.count)")
         
         currentBedtime = nil
         isSleeping = false
@@ -126,6 +127,7 @@ import SwiftUI
         
         // 오늘의 수면 요약 표시
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            print("🌅 기상 후 후기 입력 알림 전송")
             NotificationCenter.default.post(name: NSNotification.Name("ShowTodaySummary"), object: nil)
         }
     }
@@ -151,6 +153,7 @@ import SwiftUI
         
         sleepRecords.append(record)
         saveSleepRecords()
+        print("💾 취소 기록 저장 완료 - 총 기록 수: \(sleepRecords.count)")
         
         currentBedtime = nil
         isSleeping = false
@@ -163,18 +166,71 @@ import SwiftUI
         
         // 오늘의 수면 요약 표시
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            print("❌ 취소 후 후기 입력 알림 전송")
             NotificationCenter.default.post(name: NSNotification.Name("ShowTodaySummary"), object: nil)
         }
     }
     
     func resetToInitialState() {
         print("🔄 초기 상태로 리셋 시작")
-        cancelSleep()
+        print("🔄 현재 수면 상태: \(isSleeping)")
+        print("🔄 현재 취침 시간: \(currentBedtime?.formatted(date: .omitted, time: .shortened) ?? "없음")")
+        
+        // 취소 메시지로 인한 리셋이므로 후기 입력 모달 없이 직접 초기화
+        guard let bedtime = currentBedtime else { 
+            print("🔄 취침 시간이 없어서 리셋 중단")
+            return 
+        }
+        
+        let wakeTime = Date()
+        let record = SleepRecord(
+            bedtime: bedtime, 
+            wakeTime: wakeTime, 
+            fatigueLevel: currentFatigueLevel, 
+            bedtimeMessage: currentBedtimeMessage,
+            insomniaMessages: currentInsomniaMessages
+        )
+        
+        sleepRecords.append(record)
+        saveSleepRecords()
+        print("💾 취소 기록 저장 완료 - 총 기록 수: \(sleepRecords.count)")
+        
+        currentBedtime = nil
+        isSleeping = false
+        currentFatigueLevel = 3
+        currentBedtimeMessage = ""
+        currentInsomniaMessages = []
+        saveCurrentState()
+        
+        print("❌ 수면 취소됨 - 기록 저장됨: \(record.formattedDuration)")
+        
         // 첫 번째 탭(취침)으로 이동하도록 알림
         NotificationCenter.default.post(name: NSNotification.Name("ResetToSleepTab"), object: nil)
-        // ActiveSleepView 닫기 알림
-        NotificationCenter.default.post(name: NSNotification.Name("DismissActiveSleepView"), object: nil)
+        
+        // 취소 후에도 후기 입력 모달 표시
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            print("❌ 취소 후 후기 입력 알림 전송")
+            NotificationCenter.default.post(name: NSNotification.Name("ShowTodaySummary"), object: nil)
+        }
+        
+        // ActiveSleepView 닫기 알림 (후기 모달 표시 후)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            NotificationCenter.default.post(name: NSNotification.Name("DismissActiveSleepView"), object: nil)
+        }
+        
         print("🔄 초기 상태로 리셋 완료")
+    }
+    
+    func deleteRecord(_ record: SleepRecord) {
+        print("🗑️ 개별 수면 기록 삭제 시작: \(record.formattedDuration)")
+        
+        if let index = sleepRecords.firstIndex(where: { $0.id == record.id }) {
+            sleepRecords.remove(at: index)
+            saveSleepRecords()
+            print("🗑️ 수면 기록 삭제 완료 - 남은 기록 수: \(sleepRecords.count)")
+        } else {
+            print("🗑️ 삭제할 기록을 찾을 수 없음")
+        }
     }
     
     func deleteAllRecords() {
@@ -268,7 +324,14 @@ import SwiftUI
     // MARK: - Sleep Summary
     
     var lastSleepRecord: SleepRecord? {
-        return sleepRecords.last
+        let lastRecord = sleepRecords.last
+        print("🔍 lastSleepRecord 호출 - 전체 기록 수: \(sleepRecords.count)")
+        if let record = lastRecord {
+            print("🔍 마지막 기록 발견: \(record.formattedDuration)")
+        } else {
+            print("🔍 마지막 기록 없음")
+        }
+        return lastRecord
     }
     
     func addSleepReview(to record: SleepRecord, review: String) {
@@ -298,13 +361,25 @@ import SwiftUI
     private func checkForWakeUp() {
         // 수면 중이고 취침 시간이 설정되어 있으면 자동으로 기상 기록
         if isSleeping, let bedtime = currentBedtime {
-            // 취침 후 최소 1시간이 지났는지 확인 (실수로 바로 기상되는 것 방지)
-            let minimumSleepTime: TimeInterval = 3600 // 1시간
-            let timeSinceBedtime = Date().timeIntervalSince(bedtime)
+            let currentTime = Date()
+            let timeSinceBedtime = currentTime.timeIntervalSince(bedtime)
+            let sleepGoalTime = sleepGoal * 3600 // 수면 목표 시간 (초)
             
-            if timeSinceBedtime >= minimumSleepTime {
-                print("🌅 앱 활성화로 자동 기상 체크")
+            print("🌅 앱 활성화로 자동 기상 체크")
+            print("🌅 취침 시간: \(bedtime.formatted(date: .omitted, time: .shortened))")
+            print("🌅 현재 시간: \(currentTime.formatted(date: .omitted, time: .shortened))")
+            print("🌅 경과 시간: \(Int(timeSinceBedtime / 3600))시간 \(Int((timeSinceBedtime.truncatingRemainder(dividingBy: 3600)) / 60))분")
+            print("🌅 수면 목표: \(sleepGoal)시간")
+            
+            // 취침 후 최소 1시간이 지났고, 수면 목표 시간이 지났으면 자동 기상
+            let minimumSleepTime: TimeInterval = 3600 // 1시간
+            if timeSinceBedtime >= minimumSleepTime && timeSinceBedtime >= sleepGoalTime {
+                print("🌅 수면 목표 시간 도달 - 자동 기상")
                 wakeUp()
+            } else if timeSinceBedtime >= minimumSleepTime {
+                print("🌅 최소 수면 시간 도달했지만 목표 시간 미달 - 수면 계속")
+            } else {
+                print("🌅 최소 수면 시간 미달 - 수면 계속")
             }
         }
     }

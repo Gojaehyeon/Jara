@@ -40,18 +40,22 @@ struct ActiveSleepView: View {
             }
             .padding(.bottom, -8)
             
-            // 수면 중 표시
-            HStack {
-                Image(systemName: "moon.fill")
-                Text("수면 중...")
+            // 수면 종료 버튼 (항상 표시)
+            Button(action: {
+                viewModel.wakeUp()
+            }) {
+                HStack {
+                    Image(systemName: "sun.max.fill")
+                    Text("수면 종료")
+                }
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 60)
+                .background(Color.orange)
+                .cornerRadius(16)
             }
-            .font(.title2)
-            .fontWeight(.semibold)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
-            .background(Color.gray)
-            .cornerRadius(16)
             
         }
         .padding(.horizontal, 24)
@@ -62,7 +66,7 @@ struct ActiveSleepView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("취소") {
                     viewModel.resetToInitialState()
-                    dismiss()
+                    // dismiss()는 resetToInitialState()에서 처리됨
                 }
                 .foregroundColor(.red)
             }
@@ -88,19 +92,38 @@ struct SleepCountdownView: View {
     
     var remainingTime: TimeInterval {
         let wakeUpTime = bedtime.addingTimeInterval(sleepGoal * 3600)
-        return max(0, wakeUpTime.timeIntervalSince(currentTime))
+        return wakeUpTime.timeIntervalSince(currentTime)
+    }
+    
+    var isOvertime: Bool {
+        return remainingTime <= 0
+    }
+    
+    var overtimeMinutes: Int {
+        return max(0, Int(-remainingTime) / 60)
     }
     
     var body: some View {
         VStack(spacing: 4) {
-            Text("남은 수면 시간")
-                .font(.headline)
-                .foregroundColor(.secondary)
-            
-            Text(formatRemainingTime(remainingTime))
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundColor(.blue)
+            if isOvertime {
+                Text("수면 시간 초과")
+                    .font(.headline)
+                    .foregroundColor(.orange)
+                
+                Text("+\(overtimeMinutes)분")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.orange)
+            } else {
+                Text("남은 수면 시간")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                
+                Text(formatRemainingTime(remainingTime))
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.blue)
+            }
         }
         .onReceive(timer) { _ in
             currentTime = Date()
@@ -118,6 +141,7 @@ struct SleepCountdownView: View {
         }
     }
 }
+
 
 #Preview {
     ActiveSleepView(viewModel: SleepViewModel())

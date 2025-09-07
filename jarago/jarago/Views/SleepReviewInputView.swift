@@ -21,10 +21,6 @@ struct SleepReviewInputView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
-                    
-                    Text("\(record.formattedDuration) 수면하셨네요!")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
                 }
                 .padding(.top, 20)
                 
@@ -62,10 +58,6 @@ struct SleepReviewInputView: View {
                 
                 // 후기 입력
                 VStack(spacing: 16) {
-                    Text("오늘 잠에 대한 후기를 남겨주세요")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     
                     ZStack(alignment: .topLeading) {
                         RoundedRectangle(cornerRadius: 16)
@@ -88,8 +80,6 @@ struct SleepReviewInputView: View {
                 }
                 .padding(.horizontal, 24)
                 
-                Spacer()
-                
                 // 버튼들
                 VStack(spacing: 12) {
                     Button(action: {
@@ -97,6 +87,8 @@ struct SleepReviewInputView: View {
                         if !sleepReview.isEmpty {
                             viewModel.addSleepReview(to: record, review: sleepReview)
                         }
+                        // 기록 탭으로 이동하고 디테일뷰 표시
+                        NotificationCenter.default.post(name: NSNotification.Name("NavigateToRecordDetail"), object: record)
                         dismiss()
                     }) {
                         Text("완료")
@@ -110,6 +102,8 @@ struct SleepReviewInputView: View {
                     }
                     
                     Button(action: {
+                        // 기록 탭으로 이동하고 디테일뷰 표시
+                        NotificationCenter.default.post(name: NSNotification.Name("NavigateToRecordDetail"), object: record)
                         dismiss()
                     }) {
                         Text("건너뛰기")
@@ -121,11 +115,13 @@ struct SleepReviewInputView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 20)
+                
+                Spacer()
             }
-            .navigationTitle("수면 후기")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .onAppear {
+                print("📝 SleepReviewInputView 표시됨 - 기록: \(record.formattedDuration)")
                 isTextFieldFocused = true
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)

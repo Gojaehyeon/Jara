@@ -65,6 +65,8 @@ struct SettingsView: View {
                         }
                     }
                 }
+                
+                Spacer()
             }
             .navigationTitle("설정")
             .navigationBarTitleDisplayMode(.large)

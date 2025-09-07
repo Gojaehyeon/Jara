@@ -4,6 +4,8 @@ import Charts
 struct RecordsView: View {
     @ObservedObject var viewModel: SleepViewModel
     @State private var selectedTab = 0
+    @Binding var navigateToDetail: Bool
+    @Binding var targetRecord: SleepRecord?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -24,6 +26,12 @@ struct RecordsView: View {
         }
         .navigationTitle("수면 기록")
         .navigationBarTitleDisplayMode(.large)
+        .onChange(of: navigateToDetail) { shouldNavigate in
+            if shouldNavigate, let record = targetRecord {
+                print("📊 RecordsView에서 디테일뷰로 이동: \(record.formattedDuration)")
+                navigateToDetail = false
+            }
+        }
     }
     
         private var recordsListView: some View {
@@ -48,10 +56,23 @@ struct RecordsView: View {
             } else {
                 List {
                     ForEach(viewModel.sleepRecords.sorted(by: { $0.date > $1.date })) { record in
-                        NavigationLink(destination: SleepRecordDetailView(record: record)) {
+                        NavigationLink(
+                            destination: SleepRecordDetailView(record: record),
+                            isActive: Binding(
+                                get: { navigateToDetail && targetRecord?.id == record.id },
+                                set: { _ in }
+                            )
+                        ) {
                             RecordRowView(record: record)
                         }
                         .buttonStyle(PlainButtonStyle())
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                viewModel.deleteRecord(record)
+                            } label: {
+                                Label("삭제", systemImage: "trash")
+                            }
+                        }
                     }
                 }
                 .listStyle(PlainListStyle())
@@ -289,5 +310,9 @@ struct StatCard: View {
     
     viewModel.sleepRecords = dummyRecords
     
-    return RecordsView(viewModel: viewModel)
+    return RecordsView(
+        viewModel: viewModel,
+        navigateToDetail: .constant(false),
+        targetRecord: .constant(nil)
+    )
 }

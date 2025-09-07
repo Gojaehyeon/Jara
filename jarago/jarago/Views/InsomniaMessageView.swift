@@ -119,7 +119,7 @@ struct InsomniaMessageView: View {
         if message.lowercased().contains("수면 취소") || message.lowercased().contains("취소") {
             print("🔴 취소 메시지 감지: \(message)")
             viewModel.resetToInitialState()
-            dismiss()
+            // dismiss()는 resetToInitialState()에서 처리됨
             return
         }
         

@@ -67,7 +67,7 @@ struct SleepView: View {
                             
                             Picker("Minutes", selection: $selectedMinutes) {
                                 ForEach(0...59, id: \.self) { minute in
-                                    if minute % 5 == 0 {
+                                    if minute % 5 == 0 || minute == 1 {
                                         Text("\(minute)").tag(minute)
                                     }
                                 }
